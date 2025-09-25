@@ -1,0 +1,61 @@
+-- Forsaken (Slasher) - Multiplicador Dinero / EXP + HP
+-- Script para Delta Executor
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- Configuración de HP
+local MAX_HP = 99999       -- HP máximo
+local MIN_HP = 10          -- HP mínimo (no mueres de un golpe)
+local REGEN_RATE = 1       -- HP regenerado por frame
+
+-- Configuración de multiplicadores
+local MONEY_MULTIPLIER = 2  -- Cambia a 3, 5, 90, etc.
+local EXP_MULTIPLIER = 2    -- Cambia a 3, 5, 90, etc.
+
+-- Esperar a que cargue el personaje
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+humanoid.Health = MAX_HP
+
+-- Evitar muerte instantánea
+humanoid.HealthChanged:Connect(function(newHealth)
+    if newHealth < MIN_HP then
+        humanoid.Health = MIN_HP
+    elseif newHealth > MAX_HP then
+        humanoid.Health = MAX_HP
+    end
+end)
+
+-- Regeneración progresiva de HP
+RunService.RenderStepped:Connect(function()
+    if humanoid.Health < MAX_HP then
+        humanoid.Health = math.min(humanoid.Health + REGEN_RATE, MAX_HP)
+    end
+end)
+
+-- Función para aplicar multiplicadores
+local function applyMultipliers()
+    local leaderstats = player:FindFirstChild("leaderstats")
+    if leaderstats then
+        local money = leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Cash")
+        local exp = leaderstats:FindFirstChild("EXP") or leaderstats:FindFirstChild("Experience")
+
+        if money then
+            money.Value = money.Value * MONEY_MULTIPLIER
+        end
+        if exp then
+            exp.Value = exp.Value * EXP_MULTIPLIER
+        end
+    end
+end
+
+-- Aplicar multiplicadores cada vez que reapareces
+player.CharacterAdded:Connect(function()
+    task.wait(2)
+    applyMultipliers()
+end)
+
+-- Aplicar al cargar
+applyMultipliers()
